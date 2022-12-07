@@ -1,21 +1,27 @@
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
 package com.ixxus.etram.experttrack.application.services;
 
-import com.ixxus.etram.experttrack.infrastructure.db.ArticleRepository;
+import com.ixxus.etram.experttrack.infrastructure.db.TblCollectionRepository;
 import com.ixxus.etram.experttrack.infrastructure.rest.dto.GetImageRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ArticleService {
 
-    private final ArticleRepository articleRepository;
+    private final TblCollectionRepository tblCollectionRepository;
 
     public ResponseEntity<?> getChildArticles(String articleId) {
-        // call repository with custom query for child articles
 
-        // build object to return Map<String id, String title> ---> tentative
+        var entities = tblCollectionRepository.findAll();
+
+        log.info(entities.toString());
 
         return null;
     }

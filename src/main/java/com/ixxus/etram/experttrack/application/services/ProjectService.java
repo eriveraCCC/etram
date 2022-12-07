@@ -1,6 +1,9 @@
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
 package com.ixxus.etram.experttrack.application.services;
 
-import com.ixxus.etram.experttrack.infrastructure.db.ProjectRepository;
+import com.ixxus.etram.experttrack.infrastructure.db.TblProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -9,7 +12,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ProjectService {
 
-    private final ProjectRepository projectRepository;
+    private final TblProjectRepository projectRepository;
 
     public ResponseEntity<?> getTopArticles(String projectId) {
         // build object to return Map<String id, String title> ---> tentative

@@ -1,3 +1,6 @@
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
 package com.ixxus.etram.experttrack.infrastructure.rest;
 
 import com.ixxus.etram.experttrack.application.services.ArticleService;
