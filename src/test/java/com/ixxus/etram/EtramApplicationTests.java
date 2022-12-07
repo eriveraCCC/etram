@@ -1,3 +1,6 @@
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
 package com.ixxus.etram;
 
 import org.junit.jupiter.api.Test;
