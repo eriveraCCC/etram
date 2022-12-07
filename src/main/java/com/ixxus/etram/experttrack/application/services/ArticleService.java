@@ -1,11 +1,17 @@
 package com.ixxus.etram.experttrack.application.services;
 
+import com.ixxus.etram.experttrack.infrastructure.db.ArticleRepository;
 import com.ixxus.etram.experttrack.infrastructure.rest.dto.GetImageRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ArticleService {
+
+    private final ArticleRepository articleRepository;
+
     public ResponseEntity<?> getChildArticles(String articleId) {
         // call repository with custom query for child articles
 
