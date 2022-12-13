@@ -26,7 +26,7 @@ public class TblPageEntity {
     private int idPageLkType;
 
     @Column (name = "page_name")
-    private String content;
+    private String pageName;
 
     @Column (name = "has_dms")
     private boolean hasDms;

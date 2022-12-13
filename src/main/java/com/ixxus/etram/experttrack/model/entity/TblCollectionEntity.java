@@ -22,7 +22,7 @@ public class TblCollectionEntity {
     @Column (name = "id_page_in_colllection")
     private Integer idPageInCollection;
 
-    @Column (name = "toc_secuence")
-    private Integer tocSecuence;
+    @Column (name = "toc_sequence")
+    private Integer tocSequence;
 
 }
