@@ -22,8 +22,7 @@ import java.util.List;
 public class ArticleController {
 
     private final ArticleService articleService;
-
-    //TODO check if projectId is needed in path
+    
     @GetMapping("/{articleId}/child")
     public ResponseEntity<List<ArticleChild>> getChildArticles(@PathVariable Integer articleId) {
 
