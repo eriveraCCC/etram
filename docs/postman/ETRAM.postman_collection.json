@@ -1,0 +1,114 @@
+{
+	"info": {
+		"_postman_id": "7296cc63-377a-48f1-8285-6d36ef311daf",
+		"name": "ETRAM",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get top articles",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/project/87/top",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"project",
+						"87",
+						"top"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get  project TOC",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/project/87/toc",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"project",
+						"87",
+						"toc"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get child articles",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/article/3981/child",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"article",
+						"3981",
+						"child"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get HTML content",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/article/3981/html",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"article",
+						"3981",
+						"html"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get article images",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/article/2915/images",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"article",
+						"2915",
+						"images"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
