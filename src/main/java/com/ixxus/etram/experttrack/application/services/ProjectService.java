@@ -1,27 +1,43 @@
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
 package com.ixxus.etram.experttrack.application.services;
 
-import com.ixxus.etram.experttrack.infrastructure.db.ProjectRepository;
+import com.ixxus.etram.experttrack.infrastructure.db.repository.project.CustomProjectRepository;
+import com.ixxus.etram.experttrack.model.ProjectToc;
+import com.ixxus.etram.experttrack.model.ArticleTopLevel;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
 
-    private final ProjectRepository projectRepository;
+    private final CustomProjectRepository projectRepository;
 
-    public ResponseEntity<?> getTopArticles(String projectId) {
-        // build object to return Map<String id, String title> ---> tentative
+    public List<ArticleTopLevel> getTopArticles(Integer idProject) {
 
-        return null;
+        var customTopArticleEntityList = projectRepository.findTopArticlesProject(idProject);
+
+        return customTopArticleEntityList.stream().map(x -> ArticleTopLevel.builder()
+                .idPageParent(x.getIdPageParent())
+                .pageName(x.getPageName())
+                .build()).toList();
     }
 
-    public ResponseEntity<?> getToCProject(String projectId) {
-        // call repository to get TOC from a given project
+    public List<ProjectToc> getToCProject(Integer projectId) {
 
-        // return String (presumably HTML)
+        var customTocProjectEntityList = projectRepository.findProjectToc(projectId);
 
-        return null;
+        return customTocProjectEntityList.stream().map(x -> ProjectToc.builder()
+                .idPage(x.getIdPage())
+                .pageName(x.getPageName())
+                .idPageToc(x.getIdPageToc())
+                .isToc(x.isToc())
+                .tocSequence(x.getTocSequence())
+                .build()).toList();
+
     }
 }
