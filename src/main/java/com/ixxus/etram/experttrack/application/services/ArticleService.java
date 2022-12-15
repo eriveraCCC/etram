@@ -67,7 +67,7 @@ public class ArticleService {
 
     private List<BufferedImage> extractImagesFromContent(String content) {
 
-        Pattern p = Pattern.compile("(?!data:image/[a-zA-Z]+;base64),[a-zA-Z0-9+/=]+(?!\")");
+        Pattern p = Pattern.compile("data:image/[a-zA-Z]+;base64,(?<match>[a-zA-Z0-9+/]+)");
 
         Matcher matcher = p.matcher(content);
 
@@ -75,7 +75,7 @@ public class ArticleService {
 
         while (matcher.find()) {
             // Had to do the substring because I'm not able to erase the comma in the regex
-            byte[] imageBytes = Base64.getDecoder().decode(matcher.group().substring(1));
+            byte[] imageBytes = Base64.getDecoder().decode(matcher.group("match"));
             ByteArrayInputStream is = new ByteArrayInputStream(imageBytes);
             try {
                 BufferedImage image = ImageIO.read(is);
