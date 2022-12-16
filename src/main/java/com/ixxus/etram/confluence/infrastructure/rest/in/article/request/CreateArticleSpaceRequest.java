@@ -1,17 +1,22 @@
-package com.ixxus.etram.confluence.model.entity;
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
+package com.ixxus.etram.confluence.infrastructure.rest.in.article.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
-@Builder
-public class Space {
+@RequiredArgsConstructor
+public class CreateArticleSpaceRequest {
+
     private String key;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String name;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String type;
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Description description;
+    private CreateArticleDescriptionRequest description;
+
 }

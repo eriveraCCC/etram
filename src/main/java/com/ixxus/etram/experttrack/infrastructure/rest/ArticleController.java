@@ -12,7 +12,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -32,6 +35,11 @@ public class ArticleController {
     @GetMapping("/{articleId}/html")
     public ResponseEntity<?> getHTMLContent(@PathVariable Integer articleId) {
         return ResponseEntity.status(HttpStatus.OK).body(articleService.getHTMLContent(articleId));
+    }
+
+    @GetMapping("/{articleId}/html/create")
+    public ResponseEntity<?> createContent(@PathVariable Integer articleId) {
+        return ResponseEntity.status(HttpStatus.OK).body(articleService.getHtmlContentAndCreatePage(articleId));
     }
 
 

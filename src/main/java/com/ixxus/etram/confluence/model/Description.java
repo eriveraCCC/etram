@@ -1,4 +1,7 @@
-package com.ixxus.etram.confluence.model.entity;
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
+package com.ixxus.etram.confluence.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
@@ -9,5 +12,5 @@ import lombok.Data;
 public class Description {
 
     @JsonProperty("plain")
-    private Content plain;
+    private Storage plain;
 }

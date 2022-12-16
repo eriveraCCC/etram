@@ -1,4 +1,7 @@
-package com.ixxus.etram.confluence.model.entity;
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
+package com.ixxus.etram.confluence.model;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

@@ -1,14 +1,17 @@
-package com.ixxus.etram.confluence.model.entity;
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
+package com.ixxus.etram.confluence.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
 @SuperBuilder
 public class Article {
+
+    private String id;
     private String type;
     private String title;
     private Space space;

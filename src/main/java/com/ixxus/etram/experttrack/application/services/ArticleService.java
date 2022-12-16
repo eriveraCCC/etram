@@ -3,6 +3,11 @@
  */
 package com.ixxus.etram.experttrack.application.services;
 
+import com.ixxus.etram.confluence.application.services.ConfluenceService;
+import com.ixxus.etram.confluence.model.Article;
+import com.ixxus.etram.confluence.model.Body;
+import com.ixxus.etram.confluence.model.Space;
+import com.ixxus.etram.confluence.model.Storage;
 import com.ixxus.etram.experttrack.infrastructure.db.repository.article.CustomArticleRepository;
 import com.ixxus.etram.experttrack.model.ArticleChild;
 import com.ixxus.etram.experttrack.model.ArticleHtmlContent;
@@ -31,6 +36,10 @@ public class ArticleService {
 
     private final CustomArticleRepository articleRepository;
 
+    private final ConfluenceService confluenceService;
+
+    private static final String CONFLUENCE_SPACE = "~6374ea69a593cb822e92c7da";
+
     public List<ArticleChild> getChildArticles(Integer articleId) {
 
         var customChildArticleEntityList = articleRepository.findChildArticles(articleId);
@@ -42,6 +51,14 @@ public class ArticleService {
                 .pageNameChild(x.getPageNameChild())
                 .tocSequence(x.getTocSequence())
                 .build()).toList();
+    }
+
+    public String getHtmlContentAndCreatePage(Integer articleId) {
+
+        var content = getHTMLContent(articleId);
+
+        return createPage(content);
+
     }
 
     public ArticleHtmlContent getHTMLContent(Integer articleId) {
@@ -56,18 +73,42 @@ public class ArticleService {
                 .build();
     }
 
+    private String createPage(ArticleHtmlContent content) {
+
+        var article = Article.builder()
+                .type("page")
+                .title(content.getPageName())
+                .space(Space.builder()
+                        .key(CONFLUENCE_SPACE)
+                        .build())
+                .body(Body.builder()
+                        .storage(Storage.builder()
+                                .value(content.getContent())
+                                .representation("storage")
+                                .build())
+                        .build())
+                .build();
+
+        var response = confluenceService.createArticle(article);
+
+        return response.getId();
+
+    }
+
     public byte[] getImagesFromArticle(Integer articleId) throws Exception {
 
         var customArticleHtmlContentEntity = articleRepository.getHtmlContent(articleId);
 
-        List<BufferedImage> images = extractImagesFromContent(customArticleHtmlContentEntity.getContent());
+        String content = removeBase64Padding(customArticleHtmlContentEntity.getContent());
+
+        List<BufferedImage> images = extractImagesFromContent(content);
 
         return compressImages(images);
     }
 
     private List<BufferedImage> extractImagesFromContent(String content) {
 
-        Pattern p = Pattern.compile("(?!data:image/[a-zA-Z]+;base64),[a-zA-Z0-9+/=]+(?!\")");
+        Pattern p = Pattern.compile("data:image/[a-zA-Z]+;base64,(?<match>[a-zA-Z0-9+/]+)");
 
         Matcher matcher = p.matcher(content);
 
@@ -75,7 +116,7 @@ public class ArticleService {
 
         while (matcher.find()) {
             // Had to do the substring because I'm not able to erase the comma in the regex
-            byte[] imageBytes = Base64.getDecoder().decode(matcher.group().substring(1));
+            byte[] imageBytes = Base64.getDecoder().decode(matcher.group("match"));
             ByteArrayInputStream is = new ByteArrayInputStream(imageBytes);
             try {
                 BufferedImage image = ImageIO.read(is);
@@ -109,6 +150,14 @@ public class ArticleService {
         }
 
         return baos.toByteArray();
+    }
+
+    private String removeBase64Padding(String content) {
+
+        content = content.replace("\\", "");
+        //content = content.replace("=", "");
+
+        return content;
     }
 }
 

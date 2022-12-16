@@ -1,32 +1,43 @@
+/*
+ * (c) 2022 Copyright Clearance Center
+ */
 package com.ixxus.etram.confluence.application.services;
 
-import com.ixxus.etram.confluence.model.entity.Article;
-import com.ixxus.etram.confluence.model.entity.ChildArticle;
-import com.ixxus.etram.confluence.model.entity.Space;
-import org.springframework.http.ResponseEntity;
+import com.ixxus.etram.confluence.infrastructure.rest.out.ConfluenceRestService;
+import com.ixxus.etram.confluence.infrastructure.rest.out.response.ConfluenceRestResponse;
+import com.ixxus.etram.confluence.infrastructure.rest.out.response.ConfluenceRestResponseList;
+import com.ixxus.etram.confluence.model.Article;
+import com.ixxus.etram.confluence.model.ChildArticle;
+import com.ixxus.etram.confluence.model.Space;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @Service
+@RequiredArgsConstructor
 public class ConfluenceService {
 
-    public ResponseEntity<?> createArticle(Article article) {
-        return null;
+    private final ConfluenceRestService confluenceRestService;
+
+    public ConfluenceRestResponse createArticle(Article article) {
+        return confluenceRestService.createArticle(article);
     }
 
-    public ResponseEntity<?> createChildArticle(ChildArticle childArticle) {
-        return null;
+    public ConfluenceRestResponse createChildArticle(ChildArticle childArticle) {
+        return confluenceRestService.createChildArticle(childArticle);
     }
 
-    public ResponseEntity<?> updateArticle(Article article) {
-        return null;
+    public ConfluenceRestResponse updateArticle(Article article) {
+        return confluenceRestService.updateArticle(article);
     }
 
-    public ResponseEntity<?> uploadAttachment(String articleId, MultipartFile file, String comment) {
-        return null;
+    public ConfluenceRestResponseList uploadAttachment(String articleId, MultipartFile file, String comment) throws IOException {
+        return confluenceRestService.uploadAttachments(articleId, file, comment);
     }
 
-    public ResponseEntity<?> createSpace(Space space) {
-        return null;
+    public ConfluenceRestResponse createSpace(Space space) {
+        return confluenceRestService.createSpace(space);
     }
 }
