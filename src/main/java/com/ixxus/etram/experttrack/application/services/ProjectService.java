@@ -4,8 +4,8 @@
 package com.ixxus.etram.experttrack.application.services;
 
 import com.ixxus.etram.experttrack.infrastructure.db.repository.project.CustomProjectRepository;
-import com.ixxus.etram.experttrack.model.ProjectToc;
 import com.ixxus.etram.experttrack.model.ArticleTopLevel;
+import com.ixxus.etram.experttrack.model.ProjectToc;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

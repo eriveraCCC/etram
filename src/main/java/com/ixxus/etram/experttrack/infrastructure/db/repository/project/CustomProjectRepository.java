@@ -3,8 +3,8 @@
  */
 package com.ixxus.etram.experttrack.infrastructure.db.repository.project;
 
-import com.ixxus.etram.experttrack.model.entity.project.CustomProjectTocEntity;
 import com.ixxus.etram.experttrack.model.entity.article.CustomArticleTopLevelEntity;
+import com.ixxus.etram.experttrack.model.entity.project.CustomProjectTocEntity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
