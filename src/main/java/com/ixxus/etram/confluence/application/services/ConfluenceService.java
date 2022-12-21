@@ -21,6 +21,9 @@ public class ConfluenceService {
 
     private final ConfluenceRestService confluenceRestService;
 
+    public ConfluenceRestResponse getArticle(String articleId) {
+        return confluenceRestService.getArticleContent(articleId);
+    }
     public ConfluenceRestResponse createArticle(Article article) {
         return confluenceRestService.createArticle(article);
     }

@@ -15,4 +15,6 @@ public class ConfluenceRestResponse {
     private String status;
     private String title;
 
+    private ConfluenceRestBodyResponse body;
+
 }

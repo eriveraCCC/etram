@@ -30,12 +30,23 @@ import java.util.Map;
 @Slf4j
 public class ConfluenceRestService {
 
+    private static final String IXXUS_CONFLUENCE_GETARTICLE_URL = "https://ixxuswiki.atlassian.net/wiki/rest/api/content/{articleId}?expand=body.storage";
     private static final String IXXUS_CONFLUENCE_CREATEARTICLE_URL = "https://ixxuswiki.atlassian.net/wiki/rest/api/content";
     private static final String IXXUS_CONFLUENCE_UPDATEARTICLE_URL = "https://ixxuswiki.atlassian.net/wiki/rest/api/content/{articleId}";
     private static final String IXXUS_CONFLUENCE_ATTACHMENTS_URL = "https://ixxuswiki.atlassian.net/wiki/rest/api/content/{articleId}/child/attachment";
     private static final String IXXUS_CONFLUENCE_CREATESPACE_URL = "https://ixxuswiki.atlassian.net/wiki/rest/api/space";
 
     private final RestTemplate restTemplate;
+
+    public ConfluenceRestResponse getArticleContent(String articleId) {
+
+        Map<String, String> params = new HashMap<>();
+        params.put("articleId", articleId);
+
+        ResponseEntity<ConfluenceRestResponse> response = restTemplate.exchange(IXXUS_CONFLUENCE_GETARTICLE_URL, HttpMethod.GET, new HttpEntity<>(setHeaders()), ConfluenceRestResponse.class, params);
+        ConfluenceRestResponse articleRestResponse = response.getBody();
+        return articleRestResponse;
+    }
 
     public ConfluenceRestResponse createSpace(Space space) {
 
@@ -67,7 +78,7 @@ public class ConfluenceRestService {
         Map<String, String> params = new HashMap<>();
         params.put("articleId", article.getId());
 
-        ResponseEntity<ConfluenceRestResponse> response = restTemplate.exchange(IXXUS_CONFLUENCE_UPDATEARTICLE_URL, HttpMethod.PUT, new HttpEntity<>(article, setHeaders()), ConfluenceRestResponse.class, params);
+        ResponseEntity<ConfluenceRestResponse> response = restTemplate.exchange(IXXUS_CONFLUENCE_UPDATEARTICLE_URL, HttpMethod.GET, new HttpEntity<>(article, setHeaders()), ConfluenceRestResponse.class, params);
         ConfluenceRestResponse articleRestResponse = response.getBody();
         return articleRestResponse;
     }
