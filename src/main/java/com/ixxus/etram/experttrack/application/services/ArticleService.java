@@ -106,6 +106,11 @@ public class ArticleService {
         return compressImages(images);
     }
 
+    public String getPageName (Integer idPage) {
+
+        return articleRepository.getPageName(idPage);
+    }
+
     private List<BufferedImage> extractImagesFromContent(String content) {
 
         Pattern p = Pattern.compile("data:image/[a-zA-Z]+;base64,(?<match>[a-zA-Z0-9+/]+)");

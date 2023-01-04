@@ -24,6 +24,10 @@ public class ConfluenceService {
     public ConfluenceRestResponse getArticle(String articleId) {
         return confluenceRestService.getArticleContent(articleId);
     }
+
+    public ConfluenceRestResponseList getAllArticles(String spaceId) {
+        return confluenceRestService.getAllArticles(spaceId);
+    }
     public ConfluenceRestResponse createArticle(Article article) {
         return confluenceRestService.createArticle(article);
     }

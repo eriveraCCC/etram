@@ -1,22 +1,28 @@
 package com.ixxus.etram.migration.application.services;
 
 import com.ixxus.etram.confluence.application.services.ConfluenceService;
+import com.ixxus.etram.confluence.infrastructure.rest.out.ConfluenceRestService;
+import com.ixxus.etram.confluence.infrastructure.rest.out.response.ConfluenceRestResponse;
 import com.ixxus.etram.confluence.model.*;
 import com.ixxus.etram.experttrack.application.services.ArticleService;
 import com.ixxus.etram.experttrack.application.services.ProjectService;
 import com.ixxus.etram.experttrack.model.ArticleChild;
 import com.ixxus.etram.experttrack.model.ArticleTopLevel;
 import com.ixxus.etram.experttrack.model.ProjectToc;
+import com.ixxus.etram.migration.application.services.dto.ReferencedPage;
+import com.ixxus.etram.migration.model.entity.CreatedArticle;
+import com.ixxus.etram.migration.model.entity.CreatedChildArticle;
 import com.ixxus.etram.migration.model.entity.ProjectHierarchy;
 import com.ixxus.etram.migration.model.entity.ProjectHierarchyTopArticle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -30,16 +36,163 @@ public class MigrationService {
 
     private final ConfluenceService confluenceService;
 
-    public ResponseEntity<?> migrate(Integer projectId, String space) {
+    private final ConfluenceRestService confluenceRestService;
+
+    public List<CreatedArticle> migrate(Integer projectId, String space) {
 
         log.info("Migrating to confluence, project: {}", projectId);
 
-        // Object to be returned
+        var projectHierarchy = getProjectHierachy(projectId);
+
+        return createArticlesConfluence(projectHierarchy, space);
+    }
+
+
+
+    public void fixBrokenLinks (Integer projectId, String space) {
+
+        var confluenceArticleList = confluenceService.getAllArticles(space);
+
+        for (ConfluenceRestResponse confluenceArticle : confluenceArticleList.getResults()) {
+
+            var references = getLinksFromHref(confluenceArticle);
+
+            if (!references.isEmpty())
+                for (ReferencedPage referencedPage : references) {
+
+                    log.info(referencedPage.toString());
+
+                    var pageName = articleService.getPageName(referencedPage.getPageId());
+
+                    log.info("Searching by page name: {}", pageName);
+
+                    var article = confluenceArticleList.getResults().stream()
+                            .filter(art -> art.getTitle().equalsIgnoreCase(pageName)).findFirst();
+
+                    if (article.isPresent()) {
+
+                        log.info("Found article: {}", article.get().getTitle());
+
+                        var link = "/wiki" + article.get().getLinks().getWebui();
+
+                        referencedPage.setNewLink(link);
+
+                        log.info("WITH NEW LINK :" + referencedPage);
+                    }
+                }
+            if (!references.isEmpty()) {
+                var updatedContent = changeLinks(confluenceArticle, references);
+                var response = updateArticle(confluenceArticle, updatedContent, space);
+                log.info(response.toString());
+            }
+
+
+
+        }
+    }
+
+    private String changeLinks (ConfluenceRestResponse confluenceArticle, List<ReferencedPage> referencedPages) {
+
+        log.info("Update article: {}", confluenceArticle.getTitle());
+        log.info("Referenced pages: {}", referencedPages.size());
+
+        var content = confluenceArticle.getBody().getStorage().getValue();
+        var parsedContent = parseHtmlContent(content);
+
+        for (ReferencedPage referencedPage: referencedPages) {
+
+            if (referencedPage.getFullLink() != null && referencedPage.getNewLink() != null) {
+
+                log.info("Replacing link {} with {}, PAGE: {}", referencedPage.getFullLink(), referencedPage.getNewLink(), confluenceArticle.getTitle());
+                parsedContent = parsedContent.replace(referencedPage.getFullLink(), referencedPage.getNewLink());
+                log.info(referencedPage.toString());
+            }
+
+
+
+        }
+
+        return parsedContent;
+    }
+
+    private ConfluenceRestResponse updateArticle(ConfluenceRestResponse confluenceArticle, String content, String space) {
+
+        log.info("UPDATING ARTICLE: {}", confluenceArticle.getTitle());
+
+
+        Article article = Article.builder()
+                .id(confluenceArticle.getId())
+                .type(confluenceArticle.getType())
+                .title(confluenceArticle.getTitle())
+                .space(Space.builder()
+                        .key(space)
+                        .build())
+                .body(Body.builder()
+                        .storage(Storage.builder()
+                                .value(content)
+                                .representation("storage")
+                                .build())
+                        .build())
+                .version(Version.builder()
+                        .number(confluenceArticle.getVersion().getNumber() + 1)
+                        .build())
+                .build();
+
+        log.info("-------------------");
+        log.info("Article: {}", article.getTitle());
+        log.info("-------------------");
+
+        return confluenceRestService.updateArticle(article);
+
+    }
+
+    private List<ReferencedPage> getLinksFromHref (ConfluenceRestResponse confluenceArticle) {
+
+        List<ReferencedPage> referencedPages = new ArrayList<>();
+        var html = parseHtmlContent(confluenceArticle.getBody().getStorage().getValue());
+
+        Pattern pattern = Pattern.compile("<a\\s+(?:[^>]*?\\s+)?href=([\"'])(.*?)\\1");
+        Matcher matcher = pattern.matcher(html);
+
+        while (matcher.find()) {
+            String href = matcher.group(2);
+
+            String[] params = href.split("&");
+            Map<String, String> map = new HashMap<>();
+            for (String param : params) {
+                if (params.length >= 2) {
+                    String name = param.split("=")[0];
+                    String value = param.split("=")[1];
+                    map.put(name, value);
+                }
+            }
+
+            if (map.get("amp;selectedIdProject") != null && map.get("amp;idPage") != null) {
+                String param1 = map.get("amp;selectedIdProject");
+                String param2 = map.get("amp;idPage");
+
+                referencedPages.add(ReferencedPage.builder()
+                        .fullLink(href)
+                        .projectId(Integer.valueOf(param1))
+                        .pageId(Integer.valueOf(param2))
+                        .build());
+            }
+        }
+
+        return referencedPages;
+    }
+
+    private String parseHtmlContent (String html) {
+
+        return html.replace("\\", "");
+
+    }
+
+    private ProjectHierarchy getProjectHierachy (Integer projectId) {
+
         ProjectHierarchy projectHierarchy = new ProjectHierarchy();
         List<ProjectHierarchyTopArticle> hierarchyTopArticles = new ArrayList<>();
-
         List<ProjectToc> tableOfContent = projectService.getToCProject(projectId);
-        //List<ArticleTopLevel> topLevelArticles = projectService.getTopArticles(projectId);
 
         for (ProjectToc topLevelArticle : tableOfContent) {
 
@@ -55,30 +208,52 @@ public class MigrationService {
 
             hierarchyTopArticles.add(projectHierarchyTopArticle);
         }
-
         projectHierarchy.setProjectId(projectId);
         projectHierarchy.setProjectTopArticles(hierarchyTopArticles);
 
-        createArticlesConfluence(projectHierarchy, space);
-
-        return ResponseEntity.ok().body(projectHierarchy);
+        return projectHierarchy;
 
     }
 
-    private void createArticlesConfluence (ProjectHierarchy projectHierarchy, String space) {
+    private List<CreatedArticle> createArticlesConfluence (ProjectHierarchy projectHierarchy, String space) {
+
+        List<CreatedArticle> createdArticlesList = new ArrayList<>();
 
         // Create top level articles
         for (ProjectHierarchyTopArticle hierarchyTopArticle : projectHierarchy.getProjectTopArticles()) {
-            var confluenceId = createArticle(hierarchyTopArticle.getArticleTopLevel(), space);
 
+            try {
+                var createdArticle = createArticle(hierarchyTopArticle.getArticleTopLevel(), space);
+
+
+
+            List<CreatedChildArticle> createdChildArticlesList = new ArrayList<>();
             for (ArticleChild articleChild : hierarchyTopArticle.getChildArticles()) {
-                createChildArticles(articleChild, confluenceId, space);
+                var createdChildArticle = createChildArticles(articleChild, createdArticle.getId(), space);
+                createdChildArticlesList.add(CreatedChildArticle.builder()
+                        .confluenceId(createdChildArticle.getId())
+                        .parentConfluenceId(createdArticle.getId())
+                        .title(createdChildArticle.getTitle())
+                        .build());
             }
 
+            createdArticlesList.add(CreatedArticle.builder()
+                    .confluenceId(createdArticle.getId())
+                    .title(createdArticle.getTitle())
+                    .childArticles(createdChildArticlesList)
+                    .build());
+            } catch (HttpClientErrorException e) {
+
+                log.error("Article could not be created", e);
+
+            }
         }
+
+
+        return createdArticlesList;
     }
 
-    private String createArticle (ArticleTopLevel articleTopLevel, String space) {
+    private ConfluenceRestResponse createArticle (ArticleTopLevel articleTopLevel, String space) {
 
         log.info("Migrating to confluence, parent article: {}", articleTopLevel.getPageName());
 
@@ -99,12 +274,10 @@ public class MigrationService {
                 .build();
 
 
-        var response = confluenceService.createArticle(article);
-
-        return response.getId();
+        return confluenceService.createArticle(article);
     }
 
-    private void createChildArticles(ArticleChild articleChild, String parentId, String space) {
+    private ConfluenceRestResponse createChildArticles(ArticleChild articleChild, String parentId, String space) {
 
         log.info("Migrating to confluence, child article: {}, parentId: {}", articleChild.getPageNameChild(), parentId);
 
@@ -127,7 +300,7 @@ public class MigrationService {
                         .build())
                 .build();
 
-        var response = confluenceService.createChildArticle(childArticle);
+        return confluenceService.createChildArticle(childArticle);
 
     }
 

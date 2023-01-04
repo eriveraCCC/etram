@@ -32,6 +32,13 @@ public class ConfluenceController {
         var response = confluenceService.getArticle(articleId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
+    @GetMapping("/article/list/{spaceId}")
+    public ResponseEntity<ConfluenceRestResponseList> getArticlesList(@PathVariable String spaceId) {
+
+        var response = confluenceService.getAllArticles(spaceId);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
     @PostMapping("/article")
     public ResponseEntity<ConfluenceRestResponse> createArticle(@RequestBody CreateArticleRequest articleRequest) {
 

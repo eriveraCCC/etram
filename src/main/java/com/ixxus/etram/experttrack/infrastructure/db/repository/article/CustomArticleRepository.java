@@ -47,6 +47,10 @@ public class CustomArticleRepository {
             "WHERE " +
             "tbl_page.id_page  = :idPage";
 
+    private static final String QUERY_PAGE_NAME = "SELECT DISTINCT page_name " +
+            "from tbl_page tp " +
+            "where id_page = :idPage";
+
     public List<CustomArticleChildEntity> findChildArticles(
             Integer idPage) {
         Query q = entityManager.createNativeQuery(QUERY_CHILD_ARTICLES, CustomArticleChildEntity.class);
@@ -61,6 +65,14 @@ public class CustomArticleRepository {
         q.setParameter("idPage", idPage);
 
         return (CustomArticleHtmlContentEntity) q.getSingleResult();
+    }
+
+    public String getPageName (
+            Integer idPage) {
+        Query q = entityManager.createNativeQuery(QUERY_PAGE_NAME, String.class);
+        q.setParameter("idPage", idPage);
+
+        return (String) q.getSingleResult();
     }
 
 }
