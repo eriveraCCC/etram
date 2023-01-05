@@ -3,11 +3,12 @@
  */
 package com.ixxus.etram.experttrack.model;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ArticleHtmlContent {
 
     private Integer idPage;

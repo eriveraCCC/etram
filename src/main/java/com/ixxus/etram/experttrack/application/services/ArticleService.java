@@ -11,6 +11,7 @@ import com.ixxus.etram.confluence.model.Storage;
 import com.ixxus.etram.experttrack.infrastructure.db.repository.article.CustomArticleRepository;
 import com.ixxus.etram.experttrack.model.ArticleChild;
 import com.ixxus.etram.experttrack.model.ArticleHtmlContent;
+import com.ixxus.etram.experttrack.model.ArticleTopLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -50,6 +51,18 @@ public class ArticleService {
                 .idPageChild(x.getIdPageChild())
                 .pageNameChild(x.getPageNameChild())
                 .tocSequence(x.getTocSequence())
+                .build()).toList();
+    }
+
+    public List<ArticleChild> getUnlinkedArticles(Integer projectId, List<Integer> linkedArticles) {
+
+        var customChildArticleEntityList = articleRepository.findUnlinkedArticles(projectId, linkedArticles);
+
+        return customChildArticleEntityList.stream().map(x -> ArticleChild.builder()
+                .idPageParent(null)
+                .pageNameParent("Unlinked articles")
+                .idPageChild(x.getIdPage())
+                .pageNameChild(x.getIdPage() + x.getPageName()) //Adding the ID at the beggining because in unlinked articles may be name duplicates
                 .build()).toList();
     }
 

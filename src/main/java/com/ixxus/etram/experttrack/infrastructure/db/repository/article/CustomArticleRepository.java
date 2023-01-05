@@ -4,6 +4,7 @@
 package com.ixxus.etram.experttrack.infrastructure.db.repository.article;
 
 import com.ixxus.etram.experttrack.model.entity.article.CustomArticleChildEntity;
+import com.ixxus.etram.experttrack.model.entity.article.CustomArticleEntity;
 import com.ixxus.etram.experttrack.model.entity.article.CustomArticleHtmlContentEntity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
@@ -18,6 +19,13 @@ public class CustomArticleRepository {
 
     private final EntityManager entityManager;
 
+    private static final String QUERY_UNLINKED_ARTICLES = "SELECT " +
+            "tpage.id_project as id_project, " +
+            "tpage.id_page as id_page, " +
+            "tpage.page_name as page_name " +
+            "from expertrack.tbl_page tpage " +
+            "where tpage.id_project = :idProject " +
+            "AND id_page NOT IN (:linkedArticles) ";
     private static final String QUERY_CHILD_ARTICLES = "SELECT " +
             "parent.id_page as id_page_parent, " +
             "parent.page_name as page_name_parent, " +
@@ -55,6 +63,15 @@ public class CustomArticleRepository {
             Integer idPage) {
         Query q = entityManager.createNativeQuery(QUERY_CHILD_ARTICLES, CustomArticleChildEntity.class);
         q.setParameter("idPage", idPage);
+
+        return q.getResultList();
+    }
+
+    public List<CustomArticleEntity> findUnlinkedArticles(
+            Integer idProject, List<Integer> linkedArticles) {
+        Query q = entityManager.createNativeQuery(QUERY_UNLINKED_ARTICLES, CustomArticleEntity.class);
+        q.setParameter("idProject", idProject);
+        q.setParameter("linkedArticles", linkedArticles);
 
         return q.getResultList();
     }

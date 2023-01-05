@@ -7,6 +7,7 @@ import com.ixxus.etram.confluence.model.*;
 import com.ixxus.etram.experttrack.application.services.ArticleService;
 import com.ixxus.etram.experttrack.application.services.ProjectService;
 import com.ixxus.etram.experttrack.model.ArticleChild;
+import com.ixxus.etram.experttrack.model.ArticleHtmlContent;
 import com.ixxus.etram.experttrack.model.ArticleTopLevel;
 import com.ixxus.etram.experttrack.model.ProjectToc;
 import com.ixxus.etram.migration.application.services.dto.ReferencedPage;
@@ -23,6 +24,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,13 +45,13 @@ public class MigrationService {
         log.info("Migrating to confluence, project: {}", projectId);
 
         var projectHierarchy = getProjectHierachy(projectId);
+        addUnlinkedProjects(projectHierarchy, projectId);
 
         return createArticlesConfluence(projectHierarchy, space);
     }
 
 
-
-    public void fixBrokenLinks (Integer projectId, String space) {
+    public void fixBrokenLinks(Integer projectId, String space) {
 
         var confluenceArticleList = confluenceService.getAllArticles(space);
 
@@ -85,13 +87,10 @@ public class MigrationService {
                 var response = updateArticle(confluenceArticle, updatedContent, space);
                 log.info(response.toString());
             }
-
-
-
         }
     }
 
-    private String changeLinks (ConfluenceRestResponse confluenceArticle, List<ReferencedPage> referencedPages) {
+    private String changeLinks(ConfluenceRestResponse confluenceArticle, List<ReferencedPage> referencedPages) {
 
         log.info("Update article: {}", confluenceArticle.getTitle());
         log.info("Referenced pages: {}", referencedPages.size());
@@ -99,7 +98,7 @@ public class MigrationService {
         var content = confluenceArticle.getBody().getStorage().getValue();
         var parsedContent = parseHtmlContent(content);
 
-        for (ReferencedPage referencedPage: referencedPages) {
+        for (ReferencedPage referencedPage : referencedPages) {
 
             if (referencedPage.getFullLink() != null && referencedPage.getNewLink() != null) {
 
@@ -107,9 +106,6 @@ public class MigrationService {
                 parsedContent = parsedContent.replace(referencedPage.getFullLink(), referencedPage.getNewLink());
                 log.info(referencedPage.toString());
             }
-
-
-
         }
 
         return parsedContent;
@@ -146,7 +142,7 @@ public class MigrationService {
 
     }
 
-    private List<ReferencedPage> getLinksFromHref (ConfluenceRestResponse confluenceArticle) {
+    private List<ReferencedPage> getLinksFromHref(ConfluenceRestResponse confluenceArticle) {
 
         List<ReferencedPage> referencedPages = new ArrayList<>();
         var html = parseHtmlContent(confluenceArticle.getBody().getStorage().getValue());
@@ -182,13 +178,13 @@ public class MigrationService {
         return referencedPages;
     }
 
-    private String parseHtmlContent (String html) {
+    private String parseHtmlContent(String html) {
 
         return html.replace("\\", "");
 
     }
 
-    private ProjectHierarchy getProjectHierachy (Integer projectId) {
+    private ProjectHierarchy getProjectHierachy(Integer projectId) {
 
         ProjectHierarchy projectHierarchy = new ProjectHierarchy();
         List<ProjectHierarchyTopArticle> hierarchyTopArticles = new ArrayList<>();
@@ -215,7 +211,30 @@ public class MigrationService {
 
     }
 
-    private List<CreatedArticle> createArticlesConfluence (ProjectHierarchy projectHierarchy, String space) {
+    private void addUnlinkedProjects(ProjectHierarchy projectHierarchy, Integer projectId) {
+
+        var linkedArticles = new ArrayList<Integer>();
+
+        for (ProjectHierarchyTopArticle articleTopLevel : projectHierarchy.getProjectTopArticles()) {
+            linkedArticles.add(articleTopLevel.getArticleTopLevel().getIdPageParent());
+            linkedArticles.addAll(articleTopLevel.getChildArticles().stream().map(ArticleChild::getIdPageChild).toList());
+        }
+
+        var unlinkedArticles = articleService.getUnlinkedArticles(projectId, linkedArticles);
+
+        var unlinkedPagesTopArticle = ProjectHierarchyTopArticle.builder()
+                .articleTopLevel(ArticleTopLevel.builder()
+                        .idPageParent(null)
+                        .pageName("Unlinked articles")
+                        .build())
+                .childArticles(unlinkedArticles)
+                .build();
+
+        projectHierarchy.getProjectTopArticles().add(unlinkedPagesTopArticle);
+
+    }
+
+    private List<CreatedArticle> createArticlesConfluence(ProjectHierarchy projectHierarchy, String space) {
 
         List<CreatedArticle> createdArticlesList = new ArrayList<>();
 
@@ -225,23 +244,26 @@ public class MigrationService {
             try {
                 var createdArticle = createArticle(hierarchyTopArticle.getArticleTopLevel(), space);
 
+                List<CreatedChildArticle> createdChildArticlesList = new ArrayList<>();
+                for (ArticleChild articleChild : hierarchyTopArticle.getChildArticles()) {
+                    try {
+                        var createdChildArticle = createChildArticles(articleChild, createdArticle.getId(), space);
+                        createdChildArticlesList.add(CreatedChildArticle.builder()
+                                .confluenceId(createdChildArticle.getId())
+                                .parentConfluenceId(createdArticle.getId())
+                                .title(createdChildArticle.getTitle())
+                                .build());
+                    } catch (HttpClientErrorException e) {
+                        log.error("Child article could not be created", e);
+                    }
+                }
 
-
-            List<CreatedChildArticle> createdChildArticlesList = new ArrayList<>();
-            for (ArticleChild articleChild : hierarchyTopArticle.getChildArticles()) {
-                var createdChildArticle = createChildArticles(articleChild, createdArticle.getId(), space);
-                createdChildArticlesList.add(CreatedChildArticle.builder()
-                        .confluenceId(createdChildArticle.getId())
-                        .parentConfluenceId(createdArticle.getId())
-                        .title(createdChildArticle.getTitle())
+                createdArticlesList.add(CreatedArticle.builder()
+                        .confluenceId(createdArticle.getId())
+                        .title(createdArticle.getTitle())
+                        .childArticles(createdChildArticlesList)
                         .build());
-            }
 
-            createdArticlesList.add(CreatedArticle.builder()
-                    .confluenceId(createdArticle.getId())
-                    .title(createdArticle.getTitle())
-                    .childArticles(createdChildArticlesList)
-                    .build());
             } catch (HttpClientErrorException e) {
 
                 log.error("Article could not be created", e);
@@ -253,11 +275,18 @@ public class MigrationService {
         return createdArticlesList;
     }
 
-    private ConfluenceRestResponse createArticle (ArticleTopLevel articleTopLevel, String space) {
+    private ConfluenceRestResponse createArticle(ArticleTopLevel articleTopLevel, String space) {
 
         log.info("Migrating to confluence, parent article: {}", articleTopLevel.getPageName());
 
-        var articleHtmlContent = articleService.getHTMLContent(articleTopLevel.getIdPageParent());
+        var articleHtmlContent = new ArticleHtmlContent();
+
+        if (articleTopLevel.getIdPageParent() != null) {
+            articleHtmlContent = articleService.getHTMLContent(articleTopLevel.getIdPageParent());
+        } else {
+            articleHtmlContent.setContent("<p>Unlinked pages parent</p>");
+        }
+
 
         var article = Article.builder()
                 .type("page")
@@ -287,7 +316,7 @@ public class MigrationService {
                 .type("page")
                 .title(articleChild.getPageNameChild())
                 .ancestors(Collections.singletonList(Ancestor.builder()
-                                .id(parentId)
+                        .id(parentId)
                         .build()))
                 .space(Space.builder()
                         .key(space)
