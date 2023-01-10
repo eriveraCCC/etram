@@ -14,8 +14,8 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 public class RestTemplateConfig {
 
-    private static final String CONFLUENCE_USERNAME = "mrada@copyright.com";
-    private static final String CONFLUENCE_TOKEN = "7ZR04azTnT9tDNK3NTztEBF2";
+    private static final String CONFLUENCE_USERNAME = "";
+    private static final String CONFLUENCE_TOKEN = "";
 
     @Bean
     public RestTemplate restTemplate() {
