@@ -19,6 +19,7 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate restTemplate() {
+
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.getInterceptors().add(new BasicAuthenticationInterceptor(CONFLUENCE_USERNAME, CONFLUENCE_TOKEN));
 
@@ -27,5 +28,4 @@ public class RestTemplateConfig {
 
         return restTemplate;
     }
-
 }
